@@ -1,0 +1,1069 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Probability Reviewer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Inter:wght@400;500;600&family=STIX+Two+Text:ital,wght@0,400;0,600;1,400&display=swap">
+<style>
+/* Layout concept: a graph-paper study notebook. Sticky tab strip with live scores, one column of question cards, chalkboard-green accent, highlighter-yellow for rubric points. */
+:root{
+  --paper:#F2F5F3; --grid:#DCE5E0; --card:#FFFFFF; --ink:#14231D; --muted:#566860; --line:#D5DFDA;
+  --accent:#0F5A45; --accent-ink:#FFFFFF; --accent-soft:#E1F0EA;
+  --hl:#F6DD6E; --hl-ink:#3A2F00;
+  --ok:#17794A; --ok-soft:#E0F2E8; --bad:#B3261E; --bad-soft:#FBE7E5; --warn:#8A5A00; --warn-soft:#FFF1D6;
+  --venn-a:rgba(15,90,69,.20); --venn-b:rgba(37,99,166,.20); --venn-line:#4B6B5F;
+  --f-display:"Bricolage Grotesque","Inter",system-ui,sans-serif;
+  --f-body:"Inter",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-math:"STIX Two Text","Times New Roman",Georgia,serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#0E1713; --grid:#18261F; --card:#15221C; --ink:#E7F0EB; --muted:#9BB0A6; --line:#27382F;
+    --accent:#5FCBA5; --accent-ink:#06261B; --accent-soft:#17302A;
+    --hl:#E9CF52; --hl-ink:#2A2200;
+    --ok:#56D08F; --ok-soft:#14301F; --bad:#FF8A80; --bad-soft:#381815; --warn:#F2BE5C; --warn-soft:#33270C;
+    --venn-a:rgba(95,203,165,.22); --venn-b:rgba(110,168,232,.24); --venn-line:#7FA595;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#0E1713; --grid:#18261F; --card:#15221C; --ink:#E7F0EB; --muted:#9BB0A6; --line:#27382F;
+  --accent:#5FCBA5; --accent-ink:#06261B; --accent-soft:#17302A;
+  --hl:#E9CF52; --hl-ink:#2A2200;
+  --ok:#56D08F; --ok-soft:#14301F; --bad:#FF8A80; --bad-soft:#381815; --warn:#F2BE5C; --warn-soft:#33270C;
+  --venn-a:rgba(95,203,165,.22); --venn-b:rgba(110,168,232,.24); --venn-line:#7FA595;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{
+  background-color:var(--paper);
+  background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+  background-size:28px 28px;
+  color:var(--ink); font-family:var(--f-body); font-size:16px; line-height:1.55;
+  padding-left:max(16px,env(safe-area-inset-left,0px)); padding-right:max(16px,env(safe-area-inset-right,0px));
+  padding-block:0 64px;
+}
+button,input,textarea{font:inherit;color:inherit}
+.wrap{max-width:780px;margin:0 auto}
+h1,h2,h3{font-family:var(--f-display);line-height:1.15;text-wrap:balance;margin:0}
+.math{font-family:var(--f-math)}
+
+/* header + tabs */
+.top{padding:28px 0 14px}
+.eyebrow{font-size:12px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.top h1{font-size:clamp(30px,6vw,44px);margin-top:6px;letter-spacing:-.01em}
+.top p{margin:8px 0 0;color:var(--muted);max-width:60ch}
+.tabbar{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--paper);border-bottom:2px solid var(--ink);margin:0 -4px;padding:8px 4px 0}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:30;background:var(--paper)}
+.tabs{display:flex;gap:4px;overflow-x:auto;scrollbar-width:none}
+.tab{flex:1 0 auto;min-width:92px;background:transparent;border:2px solid transparent;border-bottom:0;border-radius:8px 8px 0 0;padding:8px 12px;cursor:pointer;text-align:left;display:flex;flex-direction:column;gap:0;color:var(--muted)}
+.tab b{font-family:var(--f-display);font-size:16px;color:var(--ink)}
+.tab small{font-size:12px;font-variant-numeric:tabular-nums}
+.tab[aria-selected="true"]{background:var(--card);border-color:var(--ink);margin-bottom:-2px;padding-bottom:10px}
+.tab:focus-visible,.btn:focus-visible,.opt:focus-visible,.chip:focus-visible,input:focus-visible,textarea:focus-visible,.card-fc:focus-visible,summary:focus-visible,.f-ans:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.view{padding-top:22px;display:flex;flex-direction:column;gap:22px}
+.view[hidden]{display:none}
+
+/* generic cards */
+.panel{background:var(--card);border:1.5px solid var(--ink);border-radius:10px;padding:18px;min-width:0}
+.panel h2{font-size:22px;margin-bottom:6px}
+.panel h3{font-size:17px;margin:14px 0 6px}
+.sub{color:var(--muted);margin:0 0 12px;font-size:14.5px}
+.btn{background:var(--accent);color:var(--accent-ink);border:0;border-radius:8px;padding:9px 16px;font-weight:600;cursor:pointer;font-size:15px}
+.btn:hover{filter:brightness(1.08)}
+.btn.ghost{background:transparent;color:var(--ink);border:1.5px solid var(--line)}
+.btn.ghost:hover{border-color:var(--ink)}
+.btn[disabled]{opacity:.5;cursor:default}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+table{border-collapse:collapse;width:100%}
+.tbl{overflow-x:auto;max-width:100%}
+th,td{border:1px solid var(--line);padding:7px 10px;text-align:left;vertical-align:top;font-size:14.5px}
+th{background:var(--accent-soft);font-weight:600}
+td.n,th.n{text-align:center;font-variant-numeric:tabular-nums}
+.fr{display:inline-flex;flex-direction:column;vertical-align:middle;text-align:center;margin:0 .2em;font-family:var(--f-math);font-size:1em;line-height:1.25}
+.fr>span:first-child{border-bottom:1.5px solid currentColor;padding:0 .3em}
+.fr>span:last-child{padding:0 .3em}
+.formula{font-family:var(--f-math);font-size:17px}
+
+/* study guide */
+.toc{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}
+.toc a{display:block;text-decoration:none;color:var(--ink);border:1.5px solid var(--line);border-radius:8px;padding:10px 12px;background:var(--card)}
+.toc a:hover{border-color:var(--ink)}
+.toc a b{display:block;font-family:var(--f-display)}
+.toc a span{font-size:13.5px;color:var(--muted)}
+.cta{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.cta .btn{padding:14px;text-align:left;display:flex;flex-direction:column;gap:2px;font-family:var(--f-display);font-size:18px}
+.cta .btn small{font-family:var(--f-body);font-weight:500;font-size:12.5px;opacity:.85}
+.fc-stage{perspective:900px}
+.card-fc{width:100%;min-height:170px;border:2px solid var(--ink);border-radius:12px;background:var(--accent-soft);padding:20px;cursor:pointer;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;gap:8px}
+.card-fc .t{font-family:var(--f-display);font-size:26px;font-weight:700}
+.card-fc .d{font-size:17px;max-width:52ch}
+.card-fc .hint{font-size:12.5px;color:var(--muted)}
+.fc-meta{display:flex;justify-content:space-between;color:var(--muted);font-size:13.5px;margin:6px 2px 10px;font-variant-numeric:tabular-nums}
+.f-ans{display:inline}
+body.quiz .f-ans{filter:blur(7px);cursor:pointer;user-select:none}
+body.quiz .f-ans.shown{filter:none}
+.vs{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media (max-width:560px){.vs{grid-template-columns:1fr}}
+.vs>div{border:1.5px solid var(--line);border-radius:8px;padding:12px;min-width:0}
+.vs h3{margin-top:0}
+.vs ul,.steps ul{margin:6px 0 0;padding-left:20px}
+.callout{background:var(--warn-soft);border-left:4px solid var(--hl);padding:10px 12px;border-radius:4px;font-size:14.5px;margin-top:10px}
+.chk{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:6px}
+.chk label{display:flex;gap:10px;align-items:flex-start;cursor:pointer;padding:8px 10px;border:1.5px solid var(--line);border-radius:8px;background:var(--card)}
+.chk input{margin-top:5px;accent-color:var(--accent);width:17px;height:17px;flex:none}
+.chk input:checked+span{color:var(--muted);text-decoration:line-through}
+
+/* set header */
+.set-head{display:flex;flex-wrap:wrap;gap:12px;justify-content:space-between;align-items:flex-end}
+.set-head h2{font-size:30px}
+.bignum{font-family:var(--f-display);font-size:34px;font-weight:700;font-variant-numeric:tabular-nums;line-height:1}
+.bignum small{font-size:16px;color:var(--muted);font-weight:500}
+.meter{height:10px;border:1.5px solid var(--ink);border-radius:6px;overflow:hidden;margin-top:12px;background:var(--card)}
+.meter i{display:block;height:100%;width:0;background:var(--accent);transition:width .35s}
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:13.5px;color:var(--muted);margin-top:8px}
+
+/* parts + questions */
+.part{display:flex;flex-direction:column;gap:12px}
+.part-h{display:flex;gap:12px;align-items:baseline;border-bottom:2px solid var(--ink);padding-bottom:6px}
+.part-h .r{font-family:var(--f-display);font-size:13px;font-weight:700;background:var(--ink);color:var(--paper);padding:2px 8px;border-radius:4px;letter-spacing:.04em}
+.part-h h3{font-size:20px}
+.part-h small{margin-left:auto;color:var(--muted);white-space:nowrap}
+.q{display:flex;gap:12px;background:var(--card);border:1.5px solid var(--line);border-radius:10px;padding:14px;min-width:0}
+.q.right{border-color:var(--ok)}
+.q.wrong{border-color:var(--bad)}
+.qnum{flex:none;font-family:var(--f-display);font-weight:700;font-size:15px;width:30px;height:30px;border-radius:50%;border:2px solid var(--ink);display:grid;place-items:center;font-variant-numeric:tabular-nums}
+.qbody{flex:1;min-width:0;display:flex;flex-direction:column;gap:10px}
+.qtext{font-size:16.5px}
+.qtext .math,.formula-i{font-family:var(--f-math);font-size:1.06em}
+.opts{display:grid;gap:8px}
+.opt{display:flex;gap:10px;text-align:left;background:var(--paper);border:1.5px solid var(--line);border-radius:8px;padding:9px 12px;cursor:pointer;align-items:flex-start}
+.opt:hover:not([disabled]){border-color:var(--ink)}
+.opt .l{flex:none;font-family:var(--f-display);font-weight:700;width:22px;height:22px;border-radius:5px;border:1.5px solid currentColor;display:grid;place-items:center;font-size:12.5px;margin-top:1px}
+.opt.right{background:var(--ok-soft);border-color:var(--ok)}
+.opt.bad{background:var(--bad-soft);border-color:var(--bad)}
+.opt[disabled]{cursor:default}
+.ans-row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+input.num,textarea.work{background:var(--paper);border:1.5px solid var(--ink);border-radius:8px;padding:9px 12px;min-width:0}
+input.num{width:170px;font-variant-numeric:tabular-nums}
+input.num.ok{border-color:var(--ok);background:var(--ok-soft)}
+input.num.no{border-color:var(--bad);background:var(--bad-soft)}
+textarea.work{width:100%;min-height:74px;resize:vertical;font-size:15px}
+.fb{border-radius:8px;padding:10px 12px;font-size:14.5px}
+.fb.good{background:var(--ok-soft);border:1.5px solid var(--ok)}
+.fb.bad{background:var(--bad-soft);border:1.5px solid var(--bad)}
+.fb.info{background:var(--warn-soft);border:1.5px solid var(--warn)}
+.fb b.v{font-family:var(--f-display)}
+.fb .math{font-family:var(--f-math);font-size:1.06em}
+
+/* problem solving */
+.ps{display:flex;flex-direction:column;gap:12px;background:var(--card);border:2px solid var(--ink);border-radius:10px;padding:16px;min-width:0}
+.ps-h{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between}
+.ps-h h4{margin:0;font-family:var(--f-display);font-size:19px}
+.pts{background:var(--hl);color:var(--hl-ink);font-weight:700;font-size:13px;padding:3px 10px;border-radius:999px;font-variant-numeric:tabular-nums}
+.ps .qtext{font-size:16.5px}
+.venn{position:relative;width:100%;max-width:400px;aspect-ratio:400/250}
+.venn svg{position:absolute;inset:0;width:100%;height:100%}
+.v-rect{fill:none;stroke:var(--venn-line);stroke-width:2}
+.venn .ca{fill:var(--venn-a);stroke:var(--venn-line);stroke-width:2}
+.venn .cb{fill:var(--venn-b);stroke:var(--venn-line);stroke-width:2}
+.venn text{fill:var(--ink);font-family:var(--f-math);font-style:italic;font-size:20px}
+.venn input{position:absolute;transform:translate(-50%,-50%);width:15%;min-width:44px;text-align:center;padding:5px 2px;background:var(--card);border:1.5px solid var(--ink);border-radius:6px;font-variant-numeric:tabular-nums}
+.venn input.ok{border-color:var(--ok);background:var(--ok-soft)}
+.venn input.no{border-color:var(--bad);background:var(--bad-soft)}
+.sol{border:1.5px dashed var(--ink);border-radius:8px;padding:12px;display:flex;flex-direction:column;gap:10px}
+.sol[hidden]{display:none}
+.step{display:grid;grid-template-columns:auto 1fr;gap:4px 12px}
+.step .k{font-family:var(--f-display);font-weight:700;font-size:12.5px;background:var(--accent-soft);color:var(--ink);border-radius:5px;padding:2px 8px;align-self:start;white-space:nowrap}
+.step .v{min-width:0;overflow-wrap:anywhere}
+.step .v .math{font-family:var(--f-math);font-size:1.06em}
+.boxed{display:inline-block;border:2px solid var(--ink);border-radius:4px;padding:2px 10px;font-family:var(--f-math);font-size:1.1em;font-weight:600}
+.rub{display:flex;flex-direction:column;gap:6px}
+.rub h5{margin:0;font-family:var(--f-display);font-size:15px}
+.chip{display:flex;gap:10px;align-items:flex-start;text-align:left;width:100%;background:var(--paper);border:1.5px solid var(--line);border-radius:8px;padding:8px 10px;cursor:pointer}
+.chip .box{flex:none;width:20px;height:20px;border:2px solid var(--ink);border-radius:5px;display:grid;place-items:center;font-size:13px;line-height:1;margin-top:2px}
+.chip[aria-pressed="true"]{background:var(--ok-soft);border-color:var(--ok)}
+.chip[aria-pressed="true"] .box{background:var(--ok);border-color:var(--ok);color:var(--paper)}
+.chip .p{margin-left:auto;font-weight:700;font-size:13px;white-space:nowrap;padding-left:8px}
+.chip small{display:block;color:var(--muted);font-size:12.5px}
+details.pre{border:1.5px solid var(--line);border-radius:8px;padding:8px 12px;background:var(--card)}
+details.pre summary{cursor:pointer;font-weight:600}
+
+/* results */
+.res-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin:10px 0}
+.res-grid>div{border:1.5px solid var(--line);border-radius:8px;padding:10px 12px}
+.res-grid b{display:block;font-family:var(--f-display);font-size:24px;font-variant-numeric:tabular-nums}
+.res-grid span{font-size:13px;color:var(--muted)}
+.tags{display:flex;flex-direction:column;gap:6px;margin-top:8px}
+.tagrow{display:grid;grid-template-columns:minmax(0,170px) 1fr 52px;gap:10px;align-items:center;font-size:14px}
+.tagrow .bar{height:10px;border-radius:5px;background:var(--line);overflow:hidden}
+.tagrow .bar i{display:block;height:100%;background:var(--accent)}
+.tagrow .bar i.low{background:var(--bad)}
+.tagrow em{font-style:normal;text-align:right;font-variant-numeric:tabular-nums;color:var(--muted)}
+@media (max-width:480px){.tagrow{grid-template-columns:1fr 70px}.tagrow .bar{grid-column:1/-1;order:3}}
+@media (max-width:520px){.step{grid-template-columns:1fr}.step .k{justify-self:start}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+html{color-scheme:light}
+@media (prefers-color-scheme: dark){html{color-scheme:dark}}
+body{margin:0}
+</style>
+
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="eyebrow">Finite Mathematics II · Formative exam coverage</div>
+    <h1>Probability Reviewer</h1>
+    <p>Independent and dependent events, the multiplication rule, conditional probability, Bayes' rule and Venn diagrams. Read the study guide, then answer the three practice sets.</p>
+  </header>
+
+  <nav class="tabbar" aria-label="Reviewer sections">
+    <div class="tabs" role="tablist">
+      <button class="tab" role="tab" id="tab-guide" data-tab="guide"><b>Study guide</b><small>Terms · formulas</small></button>
+      <button class="tab" role="tab" id="tab-set1" data-tab="set1"><b>Set 1</b><small id="chip1">0 / 38</small></button>
+      <button class="tab" role="tab" id="tab-set2" data-tab="set2"><b>Set 2</b><small id="chip2">0 / 38</small></button>
+      <button class="tab" role="tab" id="tab-set3" data-tab="set3"><b>Set 3</b><small id="chip3">0 / 38</small></button>
+    </div>
+  </nav>
+
+  <!-- ================= STUDY GUIDE ================= -->
+  <section class="view" id="view-guide" role="tabpanel" aria-labelledby="tab-guide">
+    <div class="panel">
+      <h2>Start here</h2>
+      <p class="sub">Each set has 18 auto-graded items (Parts I to IV, 1 point each) and 4 problem-solving items scored with the 5-point rubric (Part V, 20 points). Total: 38 points per set.</p>
+      <div class="cta">
+        <button class="btn" data-go="set1">Set 1<small>School life · 38 pts</small></button>
+        <button class="btn" data-go="set2">Set 2<small>Surveys and supplies · 38 pts</small></button>
+        <button class="btn" data-go="set3">Set 3<small>Devices and testing · 38 pts</small></button>
+      </div>
+    </div>
+
+    <div class="panel" id="g1">
+      <h2>I. Basic probability concepts</h2>
+      <p class="sub">Flashcards. Tap the card to flip it, then mark whether you knew it.</p>
+      <div class="fc-meta"><span id="fc-pos"></span><span id="fc-known"></span></div>
+      <div class="fc-stage"><button class="card-fc" id="fc-card" aria-live="polite"></button></div>
+      <div class="row" style="margin-top:12px">
+        <button class="btn" id="fc-got">Got it</button>
+        <button class="btn ghost" id="fc-again">Review again</button>
+        <button class="btn ghost" id="fc-prev">Previous</button>
+        <button class="btn ghost" id="fc-shuf">Shuffle</button>
+        <button class="btn ghost" id="fc-reset">Reset deck</button>
+      </div>
+    </div>
+
+    <div class="panel" id="g2">
+      <h2>II. Independent and dependent events</h2>
+      <p class="sub">Ask one question: does knowing that one event happened change the probability of the other?</p>
+      <div class="vs">
+        <div>
+          <h3>Independent</h3>
+          <p style="margin:0" class="formula">P(B | A) = P(B) &nbsp; or &nbsp; P(A | B) = P(A)</p>
+          <ul>
+            <li>Tossing a coin twice</li>
+            <li>Rolling a die and tossing a coin</li>
+            <li>Drawing two cards <b>with</b> replacement</li>
+            <li>Two machines that work separately</li>
+          </ul>
+        </div>
+        <div>
+          <h3>Dependent</h3>
+          <p style="margin:0" class="formula">P(B | A) ≠ P(B) &nbsp; or &nbsp; P(A | B) ≠ P(A)</p>
+          <ul>
+            <li>Drawing two cards <b>without</b> replacement</li>
+            <li>Choosing a President, then a Vice-President from the same class</li>
+            <li>Raffle tickets that are not returned to the drum</li>
+            <li>Being a senior and being a Robotics Club member (when the data say the probabilities change)</li>
+          </ul>
+        </div>
+      </div>
+      <div class="callout"><b>Trap to remember.</b> Mutually exclusive is not the same as independent. If two events with non-zero probabilities cannot occur together, then P(A ∩ B) = 0 ≠ P(A)·P(B), so they are <b>dependent</b>.</div>
+    </div>
+
+    <div class="panel" id="g3">
+      <h2>III. Important probability formulas</h2>
+      <p class="sub">Study them, then switch on quiz mode to hide each formula. Tap a blurred formula to reveal it.</p>
+      <div class="row" style="margin-bottom:10px"><button class="btn ghost" id="quiz-toggle" aria-pressed="false">Quiz mode: off</button></div>
+      <div class="tbl"><table>
+        <thead><tr><th>Rule</th><th>Formula</th><th>Use it when</th></tr></thead>
+        <tbody id="ftable"></tbody>
+      </table></div>
+    </div>
+
+    <div class="panel" id="g4">
+      <h2>IV. Solving for missing values</h2>
+      <p class="sub">Write the formula, substitute what you know, then rearrange for the unknown.</p>
+      <div class="tbl"><table>
+        <thead><tr><th>Unknown</th><th>Rearranged formula</th></tr></thead>
+        <tbody>
+          <tr><td>P(A ∩ B) from a union</td><td class="formula">P(A ∩ B) = P(A) + P(B) − P(A ∪ B)</td></tr>
+          <tr><td>P(B) from a conditional</td><td class="formula">P(B) = {P(A ∩ B)//P(A | B)}</td></tr>
+          <tr><td>P(B) when independent</td><td class="formula">P(B) = {P(A ∩ B)//P(A)}</td></tr>
+          <tr><td>P(A) in the Bayes denominator</td><td class="formula">P(A) = P(B)·P(A | B) + P(B′)·P(A | B′)</td></tr>
+          <tr><td>P(A | B′) from total probability</td><td class="formula">P(A | B′) = {P(A) − P(B)·P(A | B)//P(B′)}</td></tr>
+        </tbody>
+      </table></div>
+      <h3>Algebraic variables</h3>
+      <ul style="margin:6px 0 0;padding-left:20px">
+        <li>Complements and sums: write <span class="formula">x + (3x − 0.20) = 1</span>, collect like terms, solve for x.</li>
+        <li>Mutually exclusive events: <span class="formula">P(A) + P(B) = P(A ∪ B)</span>.</li>
+        <li>Independent events: <span class="formula">P(A)·P(B) = P(A ∩ B)</span>. This may give x² = a number, so take the positive root.</li>
+        <li>After solving, substitute x back and check that every probability is between 0 and 1.</li>
+      </ul>
+    </div>
+
+    <div class="panel" id="g5">
+      <h2>V. Which rule should I use?</h2>
+      <p class="sub">Read the key words in the problem.</p>
+      <div class="tbl"><table>
+        <thead><tr><th>Key words</th><th>Rule</th></tr></thead>
+        <tbody>
+          <tr><td>“and”, “both”, “first … then …”, “one after the other”</td><td>Multiplication rule <span class="formula">P(A ∩ B) = P(A)·P(B | A)</span>. Without replacement: use the reduced counts. With replacement or “independent”: P(A)·P(B).</td></tr>
+          <tr><td>“or”, “either”, “at least one of the two”</td><td>Addition rule <span class="formula">P(A ∪ B) = P(A) + P(B) − P(A ∩ B)</span></td></tr>
+          <tr><td>“given that”, “if it is known that”, “among those who”</td><td>Conditional probability <span class="formula">P(A | B) = {P(A ∩ B)//P(B)}</span>. In a table, only the given row or column is the sample space.</td></tr>
+          <tr><td>The result is known, you want the <b>source or cause</b> (defective item, positive test)</td><td>Bayes' rule. Compute the total probability in the denominator first.</td></tr>
+          <tr><td>“not”, “neither”, “none”</td><td>Complement <span class="formula">P(A′) = 1 − P(A)</span></td></tr>
+          <tr><td>Two or three overlapping groups, “only”, “exactly one”, “neither”</td><td>Venn diagram. Fill the overlap first, then the “only” regions, then the outside.</td></tr>
+        </tbody>
+      </table></div>
+    </div>
+
+    <div class="panel" id="g6">
+      <h2>VI. Problem-solving skills and exam reminders</h2>
+      <p class="sub">For every situational problem, make sure you can do all eight. Tick them off as you rehearse.</p>
+      <ul class="chk" id="steps8"></ul>
+      <h3>Problem-solving rubric (5 points)</h3>
+      <div class="tbl"><table>
+        <thead><tr><th>Criteria</th><th class="n">Points</th></tr></thead>
+        <tbody>
+          <tr><td>Identification of events and given information</td><td class="n">1</td></tr>
+          <tr><td>Selection of appropriate formula</td><td class="n">1</td></tr>
+          <tr><td>Substitution and mathematical procedures</td><td class="n">1</td></tr>
+          <tr><td>Accuracy of computation</td><td class="n">1</td></tr>
+          <tr><td>Final answer and presentation</td><td class="n">1</td></tr>
+          <tr><th>Total</th><th class="n">5</th></tr>
+        </tbody>
+      </table></div>
+      <div class="callout">Final answers: simplest fraction, or a decimal rounded to <b>four decimal places</b>. Box your final answer. The practice sets accept either form.</div>
+    </div>
+  </section>
+
+  <section class="view" id="view-set1" role="tabpanel" aria-labelledby="tab-set1" hidden></section>
+  <section class="view" id="view-set2" role="tabpanel" aria-labelledby="tab-set2" hidden></section>
+  <section class="view" id="view-set3" role="tabpanel" aria-labelledby="tab-set3" hidden></section>
+</div>
+
+<script>
+(function(){
+"use strict";
+
+/* ---------- helpers ---------- */
+function $(s,r){return (r||document).querySelector(s)}
+function el(tag,cls,html){var e=document.createElement(tag);if(cls)e.className=cls;if(html!=null)e.innerHTML=html;return e}
+function fmt(s){return String(s).replace(/\{([^{}]+?)\/\/([^{}]+?)\}/g,'<span class="fr"><span>$1</span><span>$2</span></span>')}
+function shuffle(a){a=a.slice();for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=a[i];a[i]=a[j];a[j]=t}return a}
+function gcd(a,b){a=Math.abs(a);b=Math.abs(b);while(b){var t=b;b=a%b;a=t}return a}
+var store={
+  get:function(k){try{return JSON.parse(localStorage.getItem(k))}catch(e){return null}},
+  set:function(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}
+};
+
+/* ---------- answer parsing and grading ---------- */
+function parseNum(s){
+  s=String(s).trim().replace(/,/g,'').replace(/\s+/g,'');
+  if(!s)return null;
+  var pct=false;if(s.charAt(s.length-1)==='%'){pct=true;s=s.slice(0,-1)}
+  var v,frac=null,m=s.match(/^(-?\d*\.?\d+)\/(\d*\.?\d+)$/);
+  if(m){if(+m[2]===0)return null;v=+m[1]/+m[2];frac={n:+m[1],d:+m[2]}}
+  else if(/^-?\d*\.?\d+$/.test(s)){v=+s}
+  else return null;
+  if(pct){v/=100;frac=null}
+  return {v:v,frac:frac};
+}
+function grade(input,a){
+  var p=parseNum(input);
+  if(!p)return {s:'invalid'};
+  var diff=Math.abs(p.v-a);
+  if(p.frac){
+    if(diff<1e-9){
+      var simple=!(Number.isInteger(p.frac.n)&&Number.isInteger(p.frac.d))||gcd(p.frac.n,p.frac.d)===1;
+      return {s:'ok',note:simple?'':'The value is right, but reduce the fraction to simplest form on the exam.'};
+    }
+    return {s:diff<0.01?'close':'wrong'};
+  }
+  if(diff<=0.00006)return {s:'ok'};
+  if(diff<0.0006)return {s:'close',round:true};
+  return {s:diff<0.01?'close':'wrong'};
+}
+
+/* ---------- topic labels ---------- */
+var TAGS={basic:'Basic concepts',indep:'Independent / dependent',formula:'Formulas',missing:'Missing values',mult:'Multiplication rule',cond:'Conditional probability',bayes:"Bayes' rule",venn:'Venn diagrams',add:'Addition rule'};
+
+/* ---------- content: study guide ---------- */
+var TERMS=[
+["Experiment","Any activity with an observable result, such as tossing a coin, rolling a die or drawing a card."],
+["Outcome","A single result of an experiment."],
+["Sample space (S)","The set of all possible outcomes of an experiment."],
+["Event","A subset of the sample space: a set of outcomes."],
+["Probability","A numerical measure of the likelihood that an event will occur. 0 ≤ P(E) ≤ 1, and the probabilities of all simple events add up to 1."],
+["Equally likely outcomes","Outcomes that have the same probability of occurring."],
+["Classical probability","P(A) = number of outcomes favorable to A ÷ total number of outcomes. Used when all outcomes are equally likely."],
+["Relative frequency","f(A) = f ÷ n: event A was observed f times in n repetitions. It approximates the probability."],
+["Law of Large Numbers","As an experiment is repeated again and again, the relative frequency of an event approaches its actual (theoretical) probability."],
+["Subjective probability","A probability assigned from judgment, experience, information and belief. It is arbitrary and can be biased."],
+["Tree diagram","A branching diagram that shows all possible outcomes step by step. Each branch is a choice or event and can carry its probability."],
+["Complement (A′)","All outcomes in the sample space that are not in A. P(A) + P(A′) = 1."],
+["Union (A ∪ B)","All outcomes that belong to A, to B, or to both. Read as “A or B”."],
+["Intersection (A ∩ B)","All outcomes common to both A and B. Read as “A and B”."],
+["Mutually exclusive events","Events that cannot occur together and have no common outcomes. P(A ∩ B) = 0."],
+["Non-mutually exclusive events","Events that share at least one outcome, so they can occur together (king and heart share the king of hearts)."],
+["Independent events","The occurrence of one does not affect the probability of the other. P(B | A) = P(B)."],
+["Dependent events","The occurrence of one affects the probability of the other. P(B | A) ≠ P(B)."],
+["Marginal (simple) probability","The probability of a single event without considering any other event, such as P(A) from the totals of a table."],
+["Joint probability","The probability that two events occur together: P(A ∩ B)."],
+["Conditional probability","P(A | B): the probability that A occurs given that B has already occurred."],
+["Prior","P(B): the probability of a cause or hypothesis before the evidence is seen."],
+["Likelihood","P(A | B): how likely the observed result A is if cause B is true."],
+["Posterior","P(B | A): the updated probability of the cause B after the result A is observed."],
+["Total probability","P(A) = ΣP(Bⱼ)·P(A | Bⱼ): every way A can happen, over all causes. It is the denominator of Bayes' rule."],
+["False positive","The test is positive, given that the person does not have the condition."],
+["False negative","The test is negative, given that the person has the condition."]
+];
+var FORMULAS=[
+["Range and sum","0 ≤ P(E) ≤ 1 &nbsp;and&nbsp; ΣP(Eᵢ) = 1","Checking that an answer is a valid probability."],
+["Classical","P(A) = {n(A)//n(S)}","All outcomes are equally likely."],
+["Relative frequency","f(A) = {f//n}","Estimating from data or past records."],
+["Complement","P(A′) = 1 − P(A)","“Not”, “none”, “neither”."],
+["Addition rule","P(A ∪ B) = P(A) + P(B) − P(A ∩ B)","“A or B” when the events can overlap."],
+["Addition, mutually exclusive","P(A ∪ B) = P(A) + P(B)","“A or B” when P(A ∩ B) = 0."],
+["Conditional probability","P(A | B) = {P(A ∩ B)//P(B)},&nbsp; P(B) ≠ 0","“Given that” or “if it is known that”."],
+["Multiplication rule","P(A ∩ B) = P(A)·P(B | A)","“A and B”, events in sequence."],
+["Independence test","P(B | A) = P(B) &nbsp;⇔&nbsp; P(A ∩ B) = P(A)·P(B)","Deciding whether events are independent. If true, the multiplication rule becomes P(A)·P(B)."],
+["Bayes' rule","P(B | A) = {P(B)·P(A | B)//P(A)}","Reversing the condition: from P(A | B) to P(B | A)."],
+["Bayes' rule, two causes","P(B | A) = {P(B)·P(A | B)//P(B)·P(A | B) + P(B′)·P(A | B′)}","Two sources, such as two machines, or condition and no condition."],
+["Bayes' rule, many causes","P(Bᵢ | A) = {P(Bᵢ)·P(A | Bᵢ)//Σⱼ P(Bⱼ)·P(A | Bⱼ)}","Three or more mutually exclusive causes."],
+["Venn diagram counts","n(A ∪ B) = n(A) + n(B) − n(A ∩ B) &nbsp;;&nbsp; only A = n(A) − n(A ∩ B)","Overlapping groups with counts."]
+];
+var STEPS8=[
+"Identify the events involved in the problem.",
+"Assign appropriate probability symbols.",
+"List the given information and identify the required probability.",
+"Determine the appropriate probability rule or formula.",
+"Substitute the given values correctly.",
+"Perform the necessary mathematical and algebraic procedures.",
+"Express your final answer in simplest fractional form or as a decimal rounded to four decimal places.",
+"Box your final answer."
+];
+var RUBRIC=[
+["Events and given information","Events named, symbols assigned, given and required probabilities listed"],
+["Appropriate formula","Correct rule chosen and written before substituting"],
+["Substitution and procedures","Values placed correctly, algebra and arithmetic steps shown"],
+["Accuracy of computation","The computation is correct"],
+["Final answer and presentation","Simplest fraction or 4-decimal answer, boxed"]
+];
+
+/* ---------- content: the three sets ---------- */
+function mc(tag,q,opts,a,why){return {t:'mc',tag:tag,q:q,opts:opts,a:a,why:why}}
+function nm(tag,q,a,show,why){return {t:'num',tag:tag,q:q,a:a,show:show,why:why}}
+
+var SETS=[
+/* =============== SET 1 =============== */
+{ title:'Set 1', theme:'School life',
+ parts:[
+ {r:'I',name:'Basic probability concepts',note:'Choose the best answer.',items:[
+  mc('basic','Which of the following values can <b>not</b> be the probability of an event?',['0','3/8','0.999','1.2'],3,'A probability always lies between 0 and 1, inclusive. 1.2 is greater than 1.'),
+  mc('basic','A coach says, “I feel our team has an 80% chance of winning the championship,” based only on her experience and instinct. This is an example of',['classical probability','relative frequency','subjective probability','the Law of Large Numbers'],2,'The probability comes from judgment and belief, not from equally likely outcomes or repeated trials, so it is subjective.'),
+  mc('add','One card is drawn from a standard deck. Event A is “the card is a queen” and event B is “the card is a spade.” Why are A and B non-mutually exclusive?',['The queen of spades belongs to both events','A queen cannot be a spade','Every spade is a queen','They have no outcomes in common'],0,'They share an outcome, the queen of spades, so both events can happen at the same time.'),
+  mc('basic','Which term describes the probability of a single event without regard to any other event?',['Joint probability','Conditional probability','Marginal (simple) probability','Posterior probability'],2,'Marginal probability, also called simple probability, looks at one event only, such as P(A) from the totals of a table.'),
+  mc('basic','If P(A) = 0.37, what is P(A′), the probability of the complement of A?',['0.37','0.63','1.37','0.73'],1,'P(A′) = 1 − P(A) = 1 − 0.37 = 0.63.'),
+  mc('basic','A fair coin is tossed 10,000 times. According to the Law of Large Numbers, the relative frequency of heads',['approaches 0.5 as the number of tosses increases','is always exactly 0.5','approaches 1','becomes less predictable'],0,'Repeating the experiment again and again makes the relative frequency approach the theoretical probability, 0.5.')
+ ]},
+ {r:'II',name:'Independent and dependent events',note:'Real-life situations.',items:[
+  mc('indep','A bag has 6 red and 4 blue marbles. One marble is drawn, its color is noted, and it is <b>returned</b> to the bag. A second marble is then drawn. The two draws are',['independent','dependent','mutually exclusive','complementary'],0,'With replacement, the bag is the same for the second draw, so the first draw does not change the second probability.'),
+  mc('indep','Two students are chosen one after the other, without replacement, from a class. The events “the first chosen is a girl” and “the second chosen is a girl” are',['independent because they are different positions','dependent because the first choice changes who is left','mutually exclusive','complementary'],1,'Without replacement the composition of the class changes after the first choice, so P(second girl | first girl) ≠ P(second girl).'),
+  mc('indep','Which pair of events is independent?',['Drawing an ace, then a king, from a deck without replacement','Getting a head on a coin toss and a 6 on a die roll','Being drawn first and being drawn second in a raffle without returning tickets','Picking two defective items from a batch without replacement'],1,'A coin toss and a die roll do not affect each other. The other pairs involve sampling without replacement.'),
+  mc('indep','P(A) = 0.5, P(B) = 0.4 and P(A ∩ B) = 0.20. Are A and B independent?',['Yes, because P(A)·P(B) = 0.20 = P(A ∩ B)','No, because P(A)·P(B) = 0.90','No, because P(A ∩ B) ≠ 0','Yes, because P(A) + P(B) = 0.9'],0,'Independent events satisfy P(A ∩ B) = P(A)·P(B). Here (0.5)(0.4) = 0.20, which equals P(A ∩ B).')
+ ]},
+ {r:'III',name:'Important probability formulas',note:'Type a fraction, a decimal or a percent.',items:[
+  nm('add','A and B are mutually exclusive, P(A) = 0.40 and P(B) = 0.35. Find P(A ∪ B).',0.75,'0.75','Mutually exclusive means P(A ∩ B) = 0, so P(A ∪ B) = 0.40 + 0.35 = 0.75.'),
+  nm('add','P(A) = 0.55, P(B) = 0.40 and P(A ∩ B) = 0.25. Find P(A ∪ B).',0.70,'0.70','P(A ∪ B) = P(A) + P(B) − P(A ∩ B) = 0.55 + 0.40 − 0.25 = 0.70.'),
+  nm('cond','P(A ∩ B) = 0.18 and P(B) = 0.30. Find P(A | B).',0.60,'0.60','P(A | B) = {P(A ∩ B)//P(B)} = {0.18//0.30} = 0.60.'),
+  nm('mult','A and B are independent, P(A) = 1/4 and P(B) = 2/3. Find P(A ∩ B).',1/6,'1/6 ≈ 0.1667','For independent events P(A ∩ B) = P(A)·P(B) = (1/4)(2/3) = 2/12 = 1/6.')
+ ]},
+ {r:'IV',name:'Solving for missing values',note:'Probabilities and algebraic variables.',items:[
+  nm('missing','P(A) = 0.50, P(B) = 0.30 and P(A ∪ B) = 0.65. Find P(A ∩ B).',0.15,'0.15','P(A ∩ B) = P(A) + P(B) − P(A ∪ B) = 0.50 + 0.30 − 0.65 = 0.15.'),
+  nm('indep','A and B are independent, P(A) = 0.40 and P(A ∩ B) = 0.12. Find P(B).',0.30,'0.30','Independent: P(A ∩ B) = P(A)·P(B), so P(B) = {0.12//0.40} = 0.30.'),
+  nm('missing','Let P(A) = x and P(A′) = 3x − 0.20. Solve for P(A).',0.30,'0.30','P(A) + P(A′) = 1 → x + (3x − 0.20) = 1 → 4x = 1.20 → x = 0.30. (Check: P(A′) = 0.70.)'),
+  nm('missing','A and B are mutually exclusive. P(A) = 2x, P(B) = x + 0.10 and P(A ∪ B) = 0.70. Find P(B).',0.30,'0.30','2x + (x + 0.10) = 0.70 → 3x = 0.60 → x = 0.20. Then P(B) = 0.20 + 0.10 = 0.30.')
+ ]}
+ ],
+ ps:[
+ { tag:'mult', title:'Defective bulbs',
+   q:'A box contains 12 LED bulbs, 4 of which are defective. Two bulbs are selected at random, one after the other, <b>without replacement</b>. What is the probability that both are defective?',
+   hint:'“One after the other” and “without replacement” tell you whether the second draw is affected by the first.',
+   a:1/11, show:'1/11 ≈ 0.0909',
+   sol:{
+    ev:'Let D₁ = the first bulb is defective and D₂ = the second bulb is defective. Given: 12 bulbs, 4 defective, no replacement. Required: P(D₁ ∩ D₂). The first bulb is not returned, so D₁ and D₂ are <b>dependent</b>.',
+    fo:'Multiplication rule: P(D₁ ∩ D₂) = P(D₁)·P(D₂ | D₁)',
+    su:'P(D₁) = 4/12. After one defective bulb is removed, 3 defective remain among 11 bulbs, so P(D₂ | D₁) = 3/11. Then P(D₁ ∩ D₂) = (4/12)(3/11).',
+    co:'= 12/132 = 1/11',
+    fi:'1/11 &nbsp;≈&nbsp; 0.0909'}},
+ { tag:'cond', title:'Review packet and passing',
+   q:'A Grade 12 class of 200 students took a periodic test. The table shows whether each student used a review packet and whether the student passed. One student is selected at random. Find the probability that the student <b>used the review packet given that the student passed</b>.',
+   table:{head:['','Passed','Failed','Total'],rows:[['Used review packet (R)',84,36,120],['No review packet (N)',32,48,80],['Total',116,84,200]]},
+   hint:'“Given that” shrinks the sample space to one column of the table. Which column?',
+   a:21/29, show:'21/29 ≈ 0.7241',
+   sol:{
+    ev:'Let R = the student used the review packet and P = the student passed. From the table: n(R ∩ P) = 84, n(P) = 116, total = 200. Required: P(R | P).',
+    fo:'Conditional probability: P(R | P) = {P(R ∩ P)//P(P)}',
+    su:'P(R ∩ P) = 84/200 and P(P) = 116/200, so P(R | P) = {84/200//116/200}.',
+    co:'= 84/116 = 21/29. (Only the Passed column is the sample space.)',
+    fi:'21/29 &nbsp;≈&nbsp; 0.7241'}},
+ { tag:'bayes', title:'Print shop machines',
+   q:'A school print shop uses two machines. Machine X prints 60% of the worksheets and 3% of its worksheets are defective. Machine Y prints the other 40% and 5% of its worksheets are defective. A worksheet is picked at random and found to be <b>defective</b>. What is the probability that it was printed by Machine X?',
+   hint:'You are given P(defective | machine) but asked for P(machine | defective). The direction of the condition is reversed.',
+   a:9/19, show:'9/19 ≈ 0.4737',
+   sol:{
+    ev:'Let X = printed by Machine X, Y = printed by Machine Y (X′), D = defective. Given: P(X) = 0.60, P(Y) = 0.40, P(D | X) = 0.03, P(D | Y) = 0.05. Required: P(X | D).',
+    fo:"Bayes' rule with two causes: P(X | D) = {P(X)·P(D | X)//P(X)·P(D | X) + P(Y)·P(D | Y)}",
+    su:'P(X | D) = {(0.60)(0.03)//(0.60)(0.03) + (0.40)(0.05)}',
+    co:'= {0.018//0.018 + 0.020} = {0.018//0.038} = 9/19',
+    fi:'9/19 &nbsp;≈&nbsp; 0.4737 &nbsp;(Machine Y is slightly more likely, 10/19 ≈ 0.5263)'}},
+ { tag:'venn', title:'Math Club and Science Club',
+   q:'In a Grade 11 class of 40 students, 24 joined the Math Club (M), 18 joined the Science Club (C) and 8 joined both clubs. (a) Fill in the Venn diagram with the number of students in each region. (b) One student is selected at random. Find the probability that the student belongs to <b>exactly one</b> club.',
+   venn:{labels:['M','C'],regions:{a:16,ab:8,b:10,n:6},unit:'number of students',names:['only M','both','only C','neither']},
+   hint:'Start with the overlap, then subtract it from each club. The outside region is what is left of the 40 students.',
+   a:13/20, show:'13/20 = 0.6500',
+   sol:{
+    ev:'Let M = Math Club and C = Science Club, with n(U) = 40, n(M) = 24, n(C) = 18, n(M ∩ C) = 8. Required: P(exactly one club) = P(M only) + P(C only).',
+    fo:'Fill the diagram from the inside out: only M = n(M) − n(M ∩ C), only C = n(C) − n(M ∩ C), neither = n(U) − n(M ∪ C). Then P(E) = {n(E)//n(U)}.',
+    su:'Only M = 24 − 8 = 16. Only C = 18 − 8 = 10. n(M ∪ C) = 16 + 8 + 10 = 34, so neither = 40 − 34 = 6. P(exactly one) = 16/40 + 10/40.',
+    co:'= 26/40 = 13/20',
+    fi:'13/20 &nbsp;=&nbsp; 0.6500'}}
+ ]},
+
+/* =============== SET 2 =============== */
+{ title:'Set 2', theme:'Surveys and supplies',
+ parts:[
+ {r:'I',name:'Basic probability concepts',note:'Choose the best answer.',items:[
+  mc('basic','A fair die is rolled once. Event A is obtaining a number greater than 4. Which set represents A?',['{5, 6}','{4, 5, 6}','{1, 2, 3, 4}','{6}'],0,'Numbers greater than 4 on a die are 5 and 6.'),
+  mc('basic','Which statement is true about the probabilities of all simple events in a sample space?',['They always add up to 1','They always add up to 0','They must all be equal','Each one must be greater than 1'],0,'The sum of the probabilities of all simple events of an experiment is 1.'),
+  mc('basic','A basketball player made 36 of her last 48 free throws. Using relative frequency, what is the estimated probability that she makes her next free throw?',['0.25','0.36','0.48','0.75'],3,'f(A) = {f//n} = {36//48} = 0.75.'),
+  mc('basic','If P(A) = 2/9, what is P(A′)?',['2/9','9/7','7/9','1/9'],2,'P(A′) = 1 − 2/9 = 7/9.'),
+  mc('add','One card is drawn from a standard deck. Which pair of events is mutually exclusive?',['The card is red; the card is a king','The card is a heart; the card is a diamond','The card is a face card; the card is a heart','The card is a club; the card is a queen'],1,'A single card cannot be both a heart and a diamond. The other pairs share a card (king of hearts, queen of hearts, queen of clubs).'),
+  mc('basic','The probability that both A and B occur, P(A ∩ B), is also called the',['marginal probability','joint probability','conditional probability','complementary probability'],1,'P(A ∩ B) is the joint probability: both events happen together.')
+ ]},
+ {r:'II',name:'Independent and dependent events',note:'Real-life situations.',items:[
+  mc('indep','Which pair of events is independent?',['Tossing a coin and rolling a die','Two hearts drawn from a deck without replacement','Two officers chosen one after the other from the same class','Two balls taken from a bag without putting the first back'],0,'The coin toss and the die roll do not influence each other. The other situations remove an object, which changes the second probability.'),
+  mc('indep','A bag has 5 red and 3 blue balls. Two are drawn without replacement. Let R₁ = “first is red” and R₂ = “second is red.” Which statement is true?',['R₁ and R₂ are independent because P(R₂) = 5/8','R₁ and R₂ are dependent because P(R₂ | R₁) = 4/7 ≠ P(R₂) = 5/8','R₁ and R₂ are dependent because P(R₂ | R₁) = 5/8','R₁ and R₂ are independent because they use the same bag'],1,'After a red ball is removed, 4 red remain among 7 balls. 4/7 ≠ 5/8, so knowing R₁ changes the probability of R₂.'),
+  mc('indep','If P(A | B) ≠ P(A), then A and B are',['independent','dependent','mutually exclusive','complementary'],1,'Events are dependent when the occurrence of one changes the probability of the other.'),
+  mc('indep','P(A) = 0.6, P(B) = 0.5 and P(A ∩ B) = 0.40. Are A and B independent?',['No, because P(A)·P(B) = 0.30 ≠ 0.40','Yes, because 0.6 + 0.5 > 1','Yes, because P(A ∩ B) > 0','No, because P(A ∩ B) < P(A)'],0,'Independence needs P(A ∩ B) = P(A)·P(B). Here (0.6)(0.5) = 0.30, which is not 0.40.')
+ ]},
+ {r:'III',name:'Important probability formulas',note:'Type a fraction, a decimal or a percent.',items:[
+  nm('add','A and B are mutually exclusive, P(A) = 0.28 and P(B) = 0.46. Find P(A ∪ B).',0.74,'0.74','P(A ∪ B) = P(A) + P(B) = 0.28 + 0.46 = 0.74.'),
+  nm('add','P(A) = 0.70, P(B) = 0.50 and P(A ∩ B) = 0.35. Find P(A ∪ B).',0.85,'0.85','P(A ∪ B) = 0.70 + 0.50 − 0.35 = 0.85.'),
+  nm('cond','P(A ∩ B) = 0.12 and P(A) = 0.48. Find P(B | A).',0.25,'0.25','P(B | A) = {P(A ∩ B)//P(A)} = {0.12//0.48} = 0.25.'),
+  nm('mult','P(A) = 3/8 and P(B | A) = 2/5. Find P(A ∩ B).',3/20,'3/20 = 0.15','Multiplication rule: P(A ∩ B) = P(A)·P(B | A) = (3/8)(2/5) = 6/40 = 3/20.')
+ ]},
+ {r:'IV',name:'Solving for missing values',note:'Probabilities and algebraic variables.',items:[
+  nm('missing','P(A ∪ B) = 0.82, P(A) = 0.55 and P(B) = 0.45. Find P(A ∩ B).',0.18,'0.18','P(A ∩ B) = P(A) + P(B) − P(A ∪ B) = 0.55 + 0.45 − 0.82 = 0.18.'),
+  nm('cond','P(A ∩ B) = 0.14 and P(A | B) = 0.35. Find P(B).',0.40,'0.40','From P(A | B) = {P(A ∩ B)//P(B)}, P(B) = {0.14//0.35} = 0.40.'),
+  nm('indep','A and B are independent. P(A) = x, P(B) = 2x and P(A ∩ B) = 0.08. Find P(B).',0.40,'0.40','x·2x = 0.08 → 2x² = 0.08 → x² = 0.04 → x = 0.20 (a probability cannot be negative). Then P(B) = 2(0.20) = 0.40.'),
+  nm('missing','A and B are mutually exclusive. P(A) = x, P(B) = x + 0.20 and P(neither A nor B) = 0.20. Find P(B).',0.50,'0.50','P(A ∪ B) = 1 − 0.20 = 0.80. So x + (x + 0.20) = 0.80 → 2x = 0.60 → x = 0.30. Then P(B) = 0.30 + 0.20 = 0.50.')
+ ]}
+ ],
+ ps:[
+ { tag:'mult', title:'Marbles in a bag',
+   q:'A bag contains 5 red and 3 blue marbles. Two marbles are drawn one after the other <b>without replacement</b>. What is the probability that the first marble is red and the second marble is blue?',
+   hint:'After the first red marble is removed, how many marbles of each color remain?',
+   a:15/56, show:'15/56 ≈ 0.2679',
+   sol:{
+    ev:'Let R₁ = the first marble is red and B₂ = the second marble is blue. Given: 5 red, 3 blue, 8 in all, no replacement. Required: P(R₁ ∩ B₂). The events are <b>dependent</b>.',
+    fo:'Multiplication rule: P(R₁ ∩ B₂) = P(R₁)·P(B₂ | R₁)',
+    su:'P(R₁) = 5/8. With one red removed, 3 blue remain among 7 marbles, so P(B₂ | R₁) = 3/7. Then P(R₁ ∩ B₂) = (5/8)(3/7).',
+    co:'= 15/56',
+    fi:'15/56 &nbsp;≈&nbsp; 0.2679'}},
+ { tag:'cond', title:'How students prefer to learn',
+   q:'A survey of 120 Grade 12 students asked how they prefer to learn. One student is selected at random. Find the probability that the student is a <b>boy given that the student prefers online learning</b>.',
+   table:{head:['','Prefers online','Prefers face-to-face','Total'],rows:[['Boys (B)',35,15,50],['Girls (G)',28,42,70],['Total',63,57,120]]},
+   hint:'Restrict your attention to the “Prefers online” column only.',
+   a:5/9, show:'5/9 ≈ 0.5556',
+   sol:{
+    ev:'Let B = the student is a boy and O = the student prefers online learning. From the table: n(B ∩ O) = 35, n(O) = 63, total = 120. Required: P(B | O).',
+    fo:'Conditional probability: P(B | O) = {P(B ∩ O)//P(O)}',
+    su:'P(B ∩ O) = 35/120 and P(O) = 63/120, so P(B | O) = {35/120//63/120}.',
+    co:'= 35/63 = 5/9',
+    fi:'5/9 &nbsp;≈&nbsp; 0.5556'}},
+ { tag:'bayes', title:'Rice suppliers',
+   q:'A school canteen buys rice from three suppliers. Supplier 1 provides 50% of the sacks, Supplier 2 provides 30% and Supplier 3 provides 20%. The percentages of spoiled sacks are 2%, 4% and 5%, respectively. A sack is chosen at random and found to be <b>spoiled</b>. What is the probability that it came from Supplier 3?',
+   hint:'Three mutually exclusive causes. Add up every way a sack can be spoiled to get the denominator.',
+   a:5/16, show:'5/16 = 0.3125',
+   sol:{
+    ev:'Let S₁, S₂, S₃ = the sack came from Supplier 1, 2, 3 (mutually exclusive, covering all sacks) and D = spoiled. Given: P(S₁) = 0.50, P(S₂) = 0.30, P(S₃) = 0.20; P(D | S₁) = 0.02, P(D | S₂) = 0.04, P(D | S₃) = 0.05. Required: P(S₃ | D).',
+    fo:"Bayes' rule with several causes: P(S₃ | D) = {P(S₃)·P(D | S₃)//Σ P(Sⱼ)·P(D | Sⱼ)}",
+    su:'P(S₃ | D) = {(0.20)(0.05)//(0.50)(0.02) + (0.30)(0.04) + (0.20)(0.05)}',
+    co:'= {0.010//0.010 + 0.012 + 0.010} = {0.010//0.032} = 5/16',
+    fi:'5/16 &nbsp;=&nbsp; 0.3125'}},
+ { tag:'venn', title:'Chemistry and Physics',
+   q:'In a group of 80 students, 45 like Chemistry (C), 38 like Physics (P) and 12 like neither subject. (a) Fill in the Venn diagram with the number of students in each region. (b) One student is selected at random. Find the probability that the student likes Chemistry <b>given that the student likes Physics</b>.',
+   venn:{labels:['C','P'],regions:{a:30,ab:15,b:23,n:12},unit:'number of students',names:['only C','both','only P','neither']},
+   hint:'First find how many like at least one subject. Then n(C ∩ P) = n(C) + n(P) − n(C ∪ P).',
+   a:15/38, show:'15/38 ≈ 0.3947',
+   sol:{
+    ev:'Let C = likes Chemistry and P = likes Physics. n(U) = 80, n(C) = 45, n(P) = 38, neither = 12. Required: P(C | P).',
+    fo:'n(C ∪ P) = n(U) − neither; n(C ∩ P) = n(C) + n(P) − n(C ∪ P); then P(C | P) = {P(C ∩ P)//P(P)}.',
+    su:'n(C ∪ P) = 80 − 12 = 68. n(C ∩ P) = 45 + 38 − 68 = 15. Only C = 45 − 15 = 30; only P = 38 − 15 = 23. P(C | P) = {15/80//38/80}.',
+    co:'= 15/38',
+    fi:'15/38 &nbsp;≈&nbsp; 0.3947'}}
+ ]},
+
+/* =============== SET 3 =============== */
+{ title:'Set 3', theme:'Devices and testing',
+ parts:[
+ {r:'I',name:'Basic probability concepts',note:'Choose the best answer.',items:[
+  mc('basic','Two coins are tossed. Which set is the sample space?',['{H, T}','{HH, TT}','{HH, HT, TH, TT}','{HT, TH}'],2,'Each coin shows H or T, giving four outcomes: HH, HT, TH, TT.'),
+  mc('basic','A bag has 3 red, 2 green and 5 blue marbles. One marble is drawn at random. Using the classical approach, what is P(green)?',['1/5','2/3','3/10','1/2'],0,'P(green) = {2//10} = 1/5.'),
+  mc('basic','Which is an example of subjective probability?',['A student believes there is a 90% chance of passing because of how hard she studied','A fair die shows a 4 with probability 1/6','A factory finds 10 defective cars out of 500 inspected','The chance that a card drawn from a deck is a heart'],0,'A probability based on personal belief and experience is subjective. The others come from equally likely outcomes or recorded data.'),
+  mc('basic','What does P(E) = 0 mean?',['The event is certain','The event is impossible','The event happens half the time','The event is unlikely but possible'],1,'A probability of 0 means the event cannot occur.'),
+  mc('add','In a Venn diagram of events A and B, the overlapping region represents',['A ∪ B','A′','A only','A ∩ B'],3,'The overlap holds the outcomes that are in both A and B: A ∩ B.'),
+  mc('bayes',"In Bayes' rule P(B | A) = P(B)·P(A | B) ÷ P(A), the quantity P(B | A) is called the",['prior','likelihood','posterior','joint probability'],2,'P(B) is the prior, P(A | B) is the likelihood and P(B | A) is the posterior, the updated probability after the evidence A.')
+ ]},
+ {r:'II',name:'Independent and dependent events',note:'Real-life situations.',items:[
+  mc('indep','A raffle drum has 50 tickets and you hold 5 of them. Two tickets are drawn one after the other and the first ticket is <b>not</b> returned. “The first ticket is yours” and “the second ticket is yours” are',['independent','dependent','mutually exclusive','complementary'],1,'If your ticket is drawn first, you have 4 tickets left among 49, so the second probability changes. The events are dependent.'),
+  mc('indep','If P(A ∩ B) = P(A)·P(B), then A and B are',['dependent','independent','complementary','impossible'],1,'This product equality is the multiplication test for independence.'),
+  mc('indep','Two events A and B have non-zero probabilities and are mutually exclusive. Which statement is true?',['They are always independent','They are always dependent','They can be either independent or dependent','They are complements of each other'],1,'P(A ∩ B) = 0, but P(A)·P(B) > 0, so the product test fails. Mutually exclusive events with non-zero probabilities are dependent.'),
+  mc('indep','P(A) = 0.25, P(B) = 0.80 and P(A | B) = 0.25. Which statement is correct?',['A and B are independent because P(A | B) = P(A)','A and B are dependent because P(A | B) ≠ P(B)','A and B are mutually exclusive because P(A | B) ≠ 0','A and B are dependent because P(A) + P(B) > 1'],0,'Knowing B did not change the probability of A, so A and B are independent.')
+ ]},
+ {r:'III',name:'Important probability formulas',note:'Type a fraction, a decimal or a percent.',items:[
+  nm('add','P(A) = 0.62, P(B) = 0.48 and P(A ∩ B) = 0.30. Find P(A ∪ B).',0.80,'0.80','P(A ∪ B) = 0.62 + 0.48 − 0.30 = 0.80.'),
+  nm('cond','P(A ∩ B) = 0.27 and P(B) = 0.45. Find P(A | B).',0.60,'0.60','P(A | B) = {0.27//0.45} = 0.60.'),
+  nm('mult','A and B are independent, P(A) = 0.35 and P(B) = 0.20. Find P(A ∩ B).',0.07,'0.07','P(A ∩ B) = P(A)·P(B) = (0.35)(0.20) = 0.07.'),
+  nm('add','A and B are mutually exclusive, P(A) = 0.30 and P(B) = 0.45. Find the probability that neither A nor B occurs.',0.25,'0.25','P(A ∪ B) = 0.30 + 0.45 = 0.75. The complement is 1 − 0.75 = 0.25.')
+ ]},
+ {r:'IV',name:'Solving for missing values',note:'Probabilities and algebraic variables.',items:[
+  nm('missing','P(A ∪ B) = 0.90, P(A ∩ B) = 0.15 and P(A) = 0.60. Find P(B).',0.45,'0.45','From P(A ∪ B) = P(A) + P(B) − P(A ∩ B): P(B) = 0.90 + 0.15 − 0.60 = 0.45.'),
+  nm('bayes','P(B) = 0.40, P(A | B) = 0.50 and P(A) = 0.80. Find P(B | A).',0.25,'0.25',"Bayes' rule: P(B | A) = {P(B)·P(A | B)//P(A)} = {(0.40)(0.50)//0.80} = {0.20//0.80} = 0.25."),
+  nm('indep','A and B are independent. P(A) = x, P(B) = x + 0.10 and P(A ∩ B) = 0.12. Find P(B).',0.40,'0.40','x(x + 0.10) = 0.12 → x² + 0.10x − 0.12 = 0 → (x + 0.40)(x − 0.30) = 0 → x = 0.30 (reject −0.40). Then P(B) = 0.30 + 0.10 = 0.40.'),
+  nm('missing','P(B) = 0.60, P(A | B) = 0.50 and P(A) = 0.38. Find P(A | B′).',0.20,'0.20','P(A) = P(B)·P(A | B) + P(B′)·P(A | B′) → 0.38 = (0.60)(0.50) + (0.40)·y → 0.08 = 0.40y → y = 0.20.')
+ ]}
+ ],
+ ps:[
+ { tag:'mult', title:'Backup generators',
+   q:'The school has two backup generators that operate <b>independently</b> during a brownout. Generator 1 starts successfully with probability 0.92 and Generator 2 starts successfully with probability 0.85. What is the probability that both generators start successfully?',
+   hint:'The word “independently” changes what P(second | first) is equal to.',
+   a:0.782, show:'0.782 = 0.7820',
+   sol:{
+    ev:'Let G₁ = Generator 1 starts and G₂ = Generator 2 starts. Given: P(G₁) = 0.92, P(G₂) = 0.85, and G₁, G₂ are <b>independent</b>. Required: P(G₁ ∩ G₂).',
+    fo:'Multiplication rule for independent events: P(G₁ ∩ G₂) = P(G₁)·P(G₂), because P(G₂ | G₁) = P(G₂).',
+    su:'P(G₁ ∩ G₂) = (0.92)(0.85)',
+    co:'= 0.782',
+    fi:'0.782 &nbsp;=&nbsp; 0.7820 &nbsp;(= 391/500)'}},
+ { tag:'cond', title:'How students commute',
+   q:'In a survey of 300 students, the way each student commutes and whether the student arrived late on a given day are shown below. One student is selected at random. Find the probability that the student <b>commutes by jeepney given that the student was late</b>.',
+   table:{head:['','Late','On time','Total'],rows:[['Jeepney (J)',30,90,120],['Train (T)',10,90,100],['Walking (W)',5,75,80],['Total',45,255,300]]},
+   hint:'The sample space is the Late column only. Which row of that column do you want?',
+   a:2/3, show:'2/3 ≈ 0.6667',
+   sol:{
+    ev:'Let J = commutes by jeepney and L = arrived late. From the table: n(J ∩ L) = 30, n(L) = 45, total = 300. Required: P(J | L).',
+    fo:'Conditional probability: P(J | L) = {P(J ∩ L)//P(L)}',
+    su:'P(J ∩ L) = 30/300 and P(L) = 45/300, so P(J | L) = {30/300//45/300}.',
+    co:'= 30/45 = 2/3',
+    fi:'2/3 &nbsp;≈&nbsp; 0.6667'}},
+ { tag:'bayes', title:'A screening test',
+   q:'A screening test is used for a condition that affects 2% of a population. The test is positive for 95% of people who have the condition, but it also gives a false positive for 6% of people who do not have it. A person selected at random tests <b>positive</b>. What is the probability that the person actually has the condition?',
+   hint:'Write P(C), P(C′), P(T | C) and P(T | C′) first. The false positive rate is P(T | C′).',
+   a:95/389, show:'95/389 ≈ 0.2442',
+   sol:{
+    ev:'Let C = has the condition, C′ = does not, T = tests positive. Given: P(C) = 0.02, P(C′) = 0.98, P(T | C) = 0.95, P(T | C′) = 0.06 (false positive). Required: P(C | T).',
+    fo:"Bayes' rule with two causes: P(C | T) = {P(C)·P(T | C)//P(C)·P(T | C) + P(C′)·P(T | C′)}",
+    su:'P(C | T) = {(0.02)(0.95)//(0.02)(0.95) + (0.98)(0.06)}',
+    co:'= {0.0190//0.0190 + 0.0588} = {0.0190//0.0778} = 95/389',
+    fi:'95/389 &nbsp;≈&nbsp; 0.2442 &nbsp;(a positive result still means only about a 24% chance, because the condition is rare)'}},
+ { tag:'venn', title:'Laptops and tablets',
+   q:'Let A be the event that a randomly chosen student owns a laptop and B the event that the student owns a tablet. P(A) = 0.55, P(B) = 0.40 and the probability that the student owns neither is 0.15. (a) Fill in the Venn diagram with probabilities. (b) Find P(B | A′), the probability that the student owns a tablet <b>given that the student does not own a laptop</b>.',
+   venn:{labels:['A','B'],regions:{a:0.45,ab:0.10,b:0.30,n:0.15},unit:'probability',names:['A only','both','B only','neither']},
+   hint:'First find P(A ∪ B) from the complement, then P(A ∩ B). “A′” is everything outside circle A.',
+   a:2/3, show:'2/3 ≈ 0.6667',
+   sol:{
+    ev:'Given: P(A) = 0.55, P(B) = 0.40, P(neither) = 0.15. Required: P(B | A′).',
+    fo:'P(A ∪ B) = 1 − P(neither); P(A ∩ B) = P(A) + P(B) − P(A ∪ B); P(B | A′) = {P(B ∩ A′)//P(A′)}, where B ∩ A′ is “B only.”',
+    su:'P(A ∪ B) = 1 − 0.15 = 0.85. P(A ∩ B) = 0.55 + 0.40 − 0.85 = 0.10. A only = 0.55 − 0.10 = 0.45; B only = 0.40 − 0.10 = 0.30. P(A′) = 1 − 0.55 = 0.45. P(B | A′) = {0.30//0.45}.',
+    co:'= 30/45 = 2/3',
+    fi:'2/3 &nbsp;≈&nbsp; 0.6667'}}
+ ]}
+];
+
+/* ---------- study guide wiring ---------- */
+(function guide(){
+  var tb=$('#ftable');
+  FORMULAS.forEach(function(f){
+    var tr=el('tr');
+    tr.innerHTML='<td>'+f[0]+'</td><td class="formula"><span class="f-ans" tabindex="0">'+fmt(f[1])+'</span></td><td>'+f[2]+'</td>';
+    tb.appendChild(tr);
+  });
+  tb.addEventListener('click',function(e){var t=e.target.closest('.f-ans');if(t)t.classList.toggle('shown')});
+  tb.addEventListener('keydown',function(e){if((e.key==='Enter'||e.key===' ')&&e.target.classList.contains('f-ans')){e.preventDefault();e.target.classList.toggle('shown')}});
+  var qt=$('#quiz-toggle');
+  qt.addEventListener('click',function(){
+    var on=!document.body.classList.contains('quiz');
+    document.body.classList.toggle('quiz',on);
+    qt.setAttribute('aria-pressed',String(on));
+    qt.textContent='Quiz mode: '+(on?'on':'off');
+    document.querySelectorAll('.f-ans.shown').forEach(function(x){x.classList.remove('shown')});
+  });
+
+  var ul=$('#steps8');
+  STEPS8.forEach(function(s,i){
+    var li=el('li');
+    li.innerHTML='<label><input type="checkbox" id="step'+i+'"><span>'+(i+1)+'. '+s+'</span></label>';
+    ul.appendChild(li);
+  });
+
+  /* flashcards */
+  var order=TERMS.map(function(_,i){return i}),pos=0,flip=false,known={};
+  var card=$('#fc-card');
+  function drawFc(){
+    var t=TERMS[order[pos]];
+    card.innerHTML=flip
+      ? '<div class="d">'+fmt(t[1])+'</div><div class="hint">Tap to see the term</div>'
+      : '<div class="t">'+t[0]+'</div><div class="hint">Tap to flip</div>';
+    card.setAttribute('aria-label',flip?'Definition of '+t[0]:'Term: '+t[0]);
+    $('#fc-pos').textContent='Card '+(pos+1)+' of '+order.length;
+    $('#fc-known').textContent=Object.keys(known).length+' of '+TERMS.length+' known';
+  }
+  function go(d){pos=(pos+d+order.length)%order.length;flip=false;drawFc()}
+  card.addEventListener('click',function(){flip=!flip;drawFc()});
+  $('#fc-got').addEventListener('click',function(){known[order[pos]]=1;go(1)});
+  $('#fc-again').addEventListener('click',function(){delete known[order[pos]];go(1)});
+  $('#fc-prev').addEventListener('click',function(){go(-1)});
+  $('#fc-shuf').addEventListener('click',function(){order=shuffle(order);pos=0;flip=false;drawFc()});
+  $('#fc-reset').addEventListener('click',function(){known={};order=TERMS.map(function(_,i){return i});pos=0;flip=false;drawFc()});
+  drawFc();
+  document.querySelectorAll('[data-go]').forEach(function(b){b.addEventListener('click',function(){show(b.getAttribute('data-go'))})});
+})();
+
+/* ---------- practice sets ---------- */
+var ST=[];
+function newState(){return {items:{},ps:{}}}
+function maxAuto(si){var n=0;SETS[si].parts.forEach(function(p){n+=p.items.length});return n}
+function maxPS(si){return SETS[si].ps.length*5}
+function scoreOf(si){
+  var s=ST[si],auto=0,ps=0,k;
+  for(k in s.items)auto+=s.items[k].pts;
+  for(k in s.ps)ps+=s.ps[k].rubric.reduce(function(a,b){return a+b},0);
+  return {auto:auto,ps:ps,total:auto+ps,max:maxAuto(si)+maxPS(si)};
+}
+
+function buildSet(si){
+  var S=SETS[si],root=$('#view-set'+(si+1));
+  ST[si]=newState();
+  root.innerHTML='';
+  var best=store.get('pr_best_'+(si+1));
+
+  /* header */
+  var head=el('div','panel');
+  head.innerHTML='<div class="set-head"><div><div class="eyebrow">'+S.theme+'</div><h2>'+S.title+'</h2></div>'
+    +'<div class="bignum" id="big'+si+'">0<small> / '+(maxAuto(si)+maxPS(si))+'</small></div></div>'
+    +'<div class="meter" aria-hidden="true"><i id="meter'+si+'"></i></div>'
+    +'<div class="legend"><span>Parts I to IV: '+maxAuto(si)+' pts, auto-graded</span><span>Part V: '+maxPS(si)+' pts, rubric</span>'
+    +'<span id="best'+si+'">'+(best!=null?'Best so far: '+best+' / '+(maxAuto(si)+maxPS(si)):'')+'</span></div>';
+  root.appendChild(head);
+
+  var n=0;
+  S.parts.forEach(function(part){
+    var sec=el('section','part');
+    sec.innerHTML='<div class="part-h"><span class="r">'+part.r+'</span><h3>'+part.name+'</h3><small>'+part.items.length+' items</small></div><p class="sub" style="margin:0">'+part.note+'</p>';
+    part.items.forEach(function(it){
+      n++;
+      var id=si+'-'+n;
+      sec.appendChild(it.t==='mc'?buildMC(si,id,n,it):buildNum(si,id,n,it));
+    });
+    root.appendChild(sec);
+  });
+
+  /* part V */
+  var v=el('section','part');
+  v.innerHTML='<div class="part-h"><span class="r">V</span><h3>Problem solving</h3><small>'+S.ps.length+' problems · 5 pts each</small></div>'
+    +'<p class="sub" style="margin:0">Solve each problem on paper using the eight steps. Enter your final answer to check it, then open the solution and score yourself with the rubric.</p>';
+  var pre=el('details','pre');
+  pre.innerHTML='<summary>Eight-step checklist and rubric</summary><ol style="margin:8px 0 0;padding-left:20px">'+STEPS8.map(function(s){return '<li>'+s+'</li>'}).join('')+'</ol>'
+    +'<div class="tbl" style="margin-top:10px"><table><thead><tr><th>Rubric criteria</th><th class="n">Pts</th></tr></thead><tbody>'
+    +RUBRIC.map(function(r){return '<tr><td>'+r[0]+'</td><td class="n">1</td></tr>'}).join('')+'</tbody></table></div>';
+  v.appendChild(pre);
+  S.ps.forEach(function(p,i){v.appendChild(buildPS(si,si+'-p'+(i+1),i+1,p))});
+  root.appendChild(v);
+
+  /* results */
+  var res=el('div','panel');res.id='res'+si;
+  root.appendChild(res);
+  update(si);
+}
+
+/* multiple choice */
+function buildMC(si,id,n,it){
+  var card=el('div','q'),body=el('div','qbody');
+  card.appendChild(el('div','qnum',String(n)));
+  body.appendChild(el('div','qtext',fmt(it.q)));
+  var list=el('div','opts'),btns=[];
+  shuffle(it.opts.map(function(_,i){return i})).forEach(function(oi,k){
+    var b=el('button','opt','<span class="l">'+'ABCD'.charAt(k)+'</span><span>'+fmt(it.opts[oi])+'</span>');
+    b.type='button';
+    b.dataset.oi=oi;
+    b.addEventListener('click',function(){
+      if(ST[si].items[id])return;
+      var ok=(oi===it.a);
+      ST[si].items[id]={pts:ok?1:0,tag:it.tag};
+      btns.forEach(function(x){
+        x.disabled=true;
+        if(+x.dataset.oi===it.a)x.classList.add('right');
+        else if(x===b)x.classList.add('bad');
+      });
+      card.classList.add(ok?'right':'wrong');
+      var fb=el('div','fb '+(ok?'good':'bad'),'<b class="v">'+(ok?'Correct. ':'Not quite. ')+'</b>'+fmt(it.why));
+      body.appendChild(fb);
+      update(si);
+    });
+    btns.push(b);list.appendChild(b);
+  });
+  body.appendChild(list);
+  card.appendChild(body);
+  return card;
+}
+
+/* numeric */
+function buildNum(si,id,n,it){
+  var card=el('div','q'),body=el('div','qbody');
+  card.appendChild(el('div','qnum',String(n)));
+  body.appendChild(el('div','qtext',fmt(it.q)));
+  var row=el('div','ans-row');
+  var inp=el('input','num');inp.type='text';inp.id='in-'+id;inp.setAttribute('inputmode','text');inp.setAttribute('autocomplete','off');inp.placeholder='e.g. 3/8 or 0.375';inp.setAttribute('aria-label','Answer for item '+n);
+  var chk=el('button','btn','Check');chk.type='button';
+  var shw=el('button','btn ghost','Show answer');shw.type='button';
+  row.append(inp,chk,shw);
+  body.appendChild(row);
+  var fb=el('div','fb');fb.hidden=true;body.appendChild(fb);
+  function lock(ok,msgHtml){
+    ST[si].items[id]={pts:ok?1:0,tag:it.tag};
+    inp.disabled=true;chk.disabled=true;shw.disabled=true;
+    inp.classList.add(ok?'ok':'no');
+    card.classList.add(ok?'right':'wrong');
+    fb.hidden=false;fb.className='fb '+(ok?'good':'bad');fb.innerHTML=msgHtml;
+    update(si);
+  }
+  function doCheck(){
+    if(ST[si].items[id])return;
+    var g=grade(inp.value,it.a);
+    if(g.s==='invalid'){fb.hidden=false;fb.className='fb info';fb.innerHTML='Enter a number, a fraction such as 3/8, a decimal or a percent.';return}
+    if(g.s==='ok'){lock(true,'<b class="v">Correct. </b>'+fmt(it.why)+(g.note?'<br><i>'+g.note+'</i>':''));return}
+    if(g.s==='close'){
+      fb.hidden=false;fb.className='fb info';
+      fb.innerHTML=g.round?'Very close. Round your decimal to <b>four decimal places</b> (or give the exact fraction) and check again.':'Close, but not yet. Re-check your arithmetic.';
+      return;
+    }
+    lock(false,'<b class="v">Not quite. </b>Answer: <b class="v math">'+it.show+'</b><br>'+fmt(it.why));
+  }
+  chk.addEventListener('click',doCheck);
+  inp.addEventListener('keydown',function(e){if(e.key==='Enter')doCheck()});
+  shw.addEventListener('click',function(){if(!ST[si].items[id])lock(false,'<b class="v">Answer: </b><b class="v math">'+it.show+'</b> (no credit for revealed answers)<br>'+fmt(it.why))});
+  card.appendChild(body);
+  return card;
+}
+
+/* problem solving */
+function buildPS(si,id,n,p){
+  var card=el('div','ps'),stt={final:null,venn:null,shown:false,rubric:[0,0,0,0,0],tag:p.tag};
+  ST[si].ps[id]=stt;
+  card.appendChild(el('div','ps-h','<h4>Problem '+n+' · '+p.title+'</h4><span class="pts" id="pp-'+id+'">0 / 5 pts</span>'));
+  card.appendChild(el('div','qtext',fmt(p.q)));
+
+  if(p.table){
+    var t='<div class="tbl"><table><thead><tr>'+p.table.head.map(function(h,i){return '<th'+(i?' class="n"':'')+'>'+h+'</th>'}).join('')+'</tr></thead><tbody>'
+      +p.table.rows.map(function(r,ri){var last=ri===p.table.rows.length-1;return '<tr>'+r.map(function(c,i){return i?'<td class="n">'+(last?'<b>'+c+'</b>':c)+'</td>':'<td>'+(last?'<b>'+c+'</b>':c)+'</td>'}).join('')+'</tr>'}).join('')
+      +'</tbody></table></div>';
+    card.appendChild(el('div',null,t));
+  }
+
+  var vennInputs=null;
+  if(p.venn){
+    var wrap=el('div'),vz=el('div','venn'),L=p.venn.labels;
+    vz.innerHTML='<svg viewBox="0 0 400 250" role="img" aria-label="Venn diagram with circles '+L[0]+' and '+L[1]+' inside a rectangle"><rect class="v-rect" x="3" y="3" width="394" height="244" rx="4"/>'
+      +'<circle class="ca" cx="150" cy="125" r="88"/><circle class="cb" cx="250" cy="125" r="88"/>'
+      +'<text x="92" y="52">'+L[0]+'</text><text x="298" y="52">'+L[1]+'</text><text x="14" y="28">U</text></svg>';
+    var pos={a:[28,50],ab:[50,50],b:[72,50],n:[90,86]},keys=['a','ab','b','n'];
+    vennInputs={};
+    keys.forEach(function(k,i){
+      var x=el('input');x.type='text';x.id='v-'+id+'-'+k;x.setAttribute('inputmode','decimal');x.setAttribute('autocomplete','off');
+      x.setAttribute('aria-label','Region '+p.venn.names[i]);x.style.left=pos[k][0]+'%';x.style.top=pos[k][1]+'%';
+      vz.appendChild(x);vennInputs[k]=x;
+    });
+    wrap.appendChild(el('div','sub','Part (a): type the '+p.venn.unit+' in each region.'));
+    wrap.appendChild(vz);
+    var vr=el('div','row');vr.style.marginTop='8px';
+    var vb=el('button','btn ghost','Check diagram');vb.type='button';
+    var vf=el('span');vf.style.fontSize='14.5px';
+    vr.append(vb,vf);wrap.appendChild(vr);
+    vb.addEventListener('click',function(){
+      var allOk=true,wrong=[];
+      keys.forEach(function(k,i){
+        var g=grade(vennInputs[k].value,p.venn.regions[k]);
+        var ok=g.s==='ok';
+        vennInputs[k].classList.remove('ok','no');vennInputs[k].classList.add(ok?'ok':'no');
+        if(!ok){allOk=false;wrong.push(p.venn.names[i])}
+      });
+      stt.venn=allOk;
+      vf.innerHTML=allOk?'<b style="color:var(--ok)">All four regions are correct.</b>':'Check again: '+wrong.join(', ')+'.';
+      update(si);
+    });
+    card.appendChild(wrap);
+  }
+
+  /* hint */
+  var hintRow=el('div','row');
+  var hb=el('button','btn ghost','Hint');hb.type='button';
+  var hbox=el('div','fb info','<b class="v">Hint. </b>'+fmt(p.hint));hbox.hidden=true;
+  hb.addEventListener('click',function(){hbox.hidden=!hbox.hidden});
+  hintRow.appendChild(hb);card.appendChild(hintRow);card.appendChild(hbox);
+
+  /* working */
+  var lab=el('label',null,'<span class="sub" style="display:block;margin-bottom:4px">Your working (optional, nothing is graded here)</span>');
+  var ta=el('textarea','work');ta.id='work-'+id;ta.placeholder='Events, symbols, given, required, formula, substitution…';
+  lab.appendChild(ta);card.appendChild(lab);
+
+  /* final answer */
+  card.appendChild(el('div','sub','Final answer'+(p.venn?' (part b)':'')+', as a simplest fraction or a decimal to four places:'));
+  var row=el('div','ans-row');
+  var inp=el('input','num');inp.type='text';inp.id='fin-'+id;inp.setAttribute('autocomplete','off');inp.placeholder='e.g. 7/12 or 0.5833';inp.setAttribute('aria-label','Final answer, problem '+n);
+  var cb=el('button','btn','Check answer');cb.type='button';
+  var sb=el('button','btn ghost','Show full solution');sb.type='button';
+  row.append(inp,cb,sb);card.appendChild(row);
+  var fb=el('div','fb');fb.hidden=true;card.appendChild(fb);
+
+  /* solution + rubric */
+  var sol=el('div','sol');sol.hidden=true;
+  var S=p.sol;
+  sol.innerHTML='<div class="step"><span class="k">1 · Events and given</span><div class="v">'+fmt(S.ev)+'</div></div>'
+    +'<div class="step"><span class="k">2 · Formula</span><div class="v math">'+fmt(S.fo)+'</div></div>'
+    +'<div class="step"><span class="k">3 · Substitution</span><div class="v math">'+fmt(S.su)+'</div></div>'
+    +'<div class="step"><span class="k">4 · Computation</span><div class="v math">'+fmt(S.co)+'</div></div>'
+    +'<div class="step"><span class="k">5 · Final answer</span><div class="v"><span class="boxed">'+S.fi.split(' &nbsp;(')[0]+'</span>'+(S.fi.indexOf(' &nbsp;(')>-1?' <span>('+S.fi.split(' &nbsp;(')[1]+'</span>':'')+'</div></div>';
+  var rub=el('div','rub');
+  rub.innerHTML='<h5>Score yourself with the rubric (tap each point you earned)</h5>';
+  var chips=[];
+  RUBRIC.forEach(function(r,i){
+    var c=el('button','chip','<span class="box"></span><span>'+r[0]+'<small>'+r[1]+'</small></span><span class="p">1 pt</span>');
+    c.type='button';c.setAttribute('aria-pressed','false');
+    c.addEventListener('click',function(){
+      stt.rubric[i]=stt.rubric[i]?0:1;
+      c.setAttribute('aria-pressed',String(!!stt.rubric[i]));
+      c.querySelector('.box').textContent=stt.rubric[i]?'✓':'';
+      update(si);
+    });
+    chips.push(c);rub.appendChild(c);
+  });
+  var rn=el('div','sub','Be honest. A correct final answer with missing steps does not earn the procedure points.');rn.style.margin='0';
+  rub.appendChild(rn);
+  sol.appendChild(rub);
+  card.appendChild(sol);
+
+  function setChip(i,on){stt.rubric[i]=on?1:0;chips[i].setAttribute('aria-pressed',String(!!on));chips[i].querySelector('.box').textContent=on?'✓':''}
+
+  function doCheck(){
+    var g=grade(inp.value,p.a);
+    fb.hidden=false;
+    if(g.s==='invalid'){fb.className='fb info';fb.innerHTML='Enter a fraction such as 7/12, a decimal or a percent.';return}
+    inp.classList.remove('ok','no');
+    if(g.s==='ok'){
+      stt.final=true;inp.classList.add('ok');fb.className='fb good';
+      fb.innerHTML='<b class="v">Final answer matches. </b>'+(g.note?'<i>'+g.note+'</i> ':'')+'Open the solution to compare your steps.';
+    }else if(g.s==='close'){
+      fb.className='fb info';
+      fb.innerHTML=g.round?'Very close. Round to <b>four decimal places</b> or give the exact fraction.':'Close, but not yet. Re-check your substitution and arithmetic.';
+    }else{
+      stt.final=false;inp.classList.add('no');fb.className='fb bad';
+      fb.innerHTML='<b class="v">Not matching yet. </b>Re-read the problem, check the events and the rule, then try again, or open the full solution.';
+    }
+    update(si);
+  }
+  cb.addEventListener('click',doCheck);
+  inp.addEventListener('keydown',function(e){if(e.key==='Enter')doCheck()});
+  sb.addEventListener('click',function(){
+    sol.hidden=!sol.hidden;
+    sb.textContent=sol.hidden?'Show full solution':'Hide solution';
+    if(!sol.hidden&&!stt.shown){
+      stt.shown=true;
+      if(stt.final===true)setChip(3,true);
+      if(p.venn&&stt.venn===true)setChip(0,true);
+      if(stt.final===true||stt.venn===true){
+        var note=el('div','sub','Accuracy'+(p.venn?' and identification were':' was')+' pre-ticked from your checks. Adjust if needed.');note.style.margin='0';
+        rub.insertBefore(note,rub.children[1]);
+      }
+      update(si);
+    }
+  });
+  return card;
+}
+
+/* live scores + results */
+function update(si){
+  var sc=scoreOf(si),s=ST[si];
+  $('#chip'+(si+1)).textContent=sc.total+' / '+sc.max;
+  $('#big'+si).innerHTML=sc.total+'<small> / '+sc.max+'</small>';
+  $('#meter'+si).style.width=(sc.total/sc.max*100)+'%';
+  Object.keys(s.ps).forEach(function(k){
+    var pts=s.ps[k].rubric.reduce(function(a,b){return a+b},0);
+    var e=$('#pp-'+k);if(e)e.textContent=pts+' / 5 pts';
+  });
+  var done=Object.keys(s.items).length,totalItems=maxAuto(si);
+  var shown=Object.keys(s.ps).filter(function(k){return s.ps[k].shown}).length;
+  var res=$('#res'+si);
+  var pct=Math.round(sc.total/sc.max*100);
+  var h='<h2>Results</h2><p class="sub">Updates as you answer. Parts I to IV answered: '+done+' of '+totalItems+'. Problems self-scored: '+shown+' of '+SETS[si].ps.length+'.</p>';
+  h+='<div class="res-grid"><div><b>'+sc.auto+' / '+totalItems+'</b><span>Parts I to IV</span></div><div><b>'+sc.ps+' / '+maxPS(si)+'</b><span>Part V rubric</span></div><div><b>'+pct+'%</b><span>Overall</span></div></div>';
+  /* by topic */
+  var by={};
+  function add(tag,got,max){if(!by[tag])by[tag]={g:0,m:0};by[tag].g+=got;by[tag].m+=max}
+  Object.keys(s.items).forEach(function(k){add(s.items[k].tag,s.items[k].pts,1)});
+  Object.keys(s.ps).forEach(function(k){if(s.ps[k].shown)add(s.ps[k].tag,s.ps[k].rubric.reduce(function(a,b){return a+b},0),5)});
+  var keys=Object.keys(by);
+  if(keys.length){
+    h+='<h3>By topic</h3><div class="tags">';
+    keys.sort(function(a,b){return by[a].g/by[a].m-by[b].g/by[b].m}).forEach(function(k){
+      var r=by[k].g/by[k].m;
+      h+='<div class="tagrow"><span>'+TAGS[k]+'</span><span class="bar"><i class="'+(r<0.7?'low':'')+'" style="width:'+Math.round(r*100)+'%"></i></span><em>'+by[k].g+' / '+by[k].m+'</em></div>';
+    });
+    h+='</div>';
+    var weak=keys.filter(function(k){return by[k].g/by[k].m<0.7}).map(function(k){return TAGS[k]});
+    if(weak.length)h+='<div class="callout"><b>Review next:</b> '+weak.join(', ')+'.</div>';
+  }
+  h+='<div class="row" style="margin-top:14px"><button class="btn ghost" id="retake'+si+'">Retake this set</button></div>';
+  res.innerHTML=h;
+  $('#retake'+si).addEventListener('click',function(){buildSet(si);window.scrollTo({top:0,behavior:'smooth'})});
+  var best=store.get('pr_best_'+(si+1));
+  if((done>=totalItems&&shown>=SETS[si].ps.length)&&(best==null||sc.total>best)){store.set('pr_best_'+(si+1),sc.total);var b=$('#best'+si);if(b)b.textContent='Best so far: '+sc.total+' / '+sc.max}
+}
+
+/* ---------- tabs ---------- */
+var NAMES=['guide','set1','set2','set3'];
+function show(name,noHash){
+  if(NAMES.indexOf(name)<0)name='guide';
+  NAMES.forEach(function(n){
+    var on=n===name;
+    $('#view-'+n).hidden=!on;
+    $('#tab-'+n).setAttribute('aria-selected',String(on));
+    $('#tab-'+n).tabIndex=on?0:-1;
+  });
+  if(!noHash){try{if(location.hash!=='#'+name)history.replaceState(null,'','#'+name)}catch(e){location.hash=name}}
+  window.scrollTo({top:0});
+}
+document.querySelectorAll('.tab').forEach(function(t){t.addEventListener('click',function(){show(t.dataset.tab)})});
+window.addEventListener('hashchange',function(){show(location.hash.replace('#',''),true)});
+
+SETS.forEach(function(_,i){buildSet(i)});
+show(location.hash.replace('#','')||'guide',true);
+})();
+</script>
+</body>
+</html>
